@@ -1,8 +1,15 @@
 const request = require("supertest");
 const app = require("../src/app");
 const User = require("../src/model/user.model");
+const connectDB = require("../src/db/db")
 
 describe("POST /auth/register", () => {
+  
+    beforeAll(async()=>{
+        await connectDB();
+    });
+
+
   it("should create a new user and return 201", async () => {
     const payload = {
       username: "testuser",
