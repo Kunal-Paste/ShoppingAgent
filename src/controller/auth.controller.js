@@ -14,7 +14,7 @@ async function registerUser(req,res){
     });
 
     if(isUserExist){
-        return res.status(409).json({message: "username or email already exist"});
+        return res.status(409).json({messaage: "username or email already exist"});
     }
 
     const hash = await bcrypt.hash(password,10);
@@ -54,26 +54,22 @@ async function registerUser(req,res){
 
 }
 
-async function loginUser(req, res){
-    try{
-        const body = req.body || {};
-        const identifier = body.identifier || body.username || body.email;
-        const password = body.password || body.pass;
+async function loginUser(req,res){
+    try {
+        
+        const {username,email,password} = req.body;
 
-        if(!identifier || !password){
-            return res.status(400).json({ message: "identifier and password are required" });
-        }
-
-        const user = await userModel.findOne({
-            $or: [ { username: identifier }, { email: identifier } ]
-        }).select('+password');
+        const user = await userModel.findOne({$or:[{email}, {username}]}).select('+password');
 
         if(!user){
-            return res.status(401).json({ message: "invalid credentials" });
+            return res.status(401).json({message:"invalid credentials"});
         }
 
-        const match = await bcrypt.compare(password, user.password || '');
-        if(!match) return res.status(401).json({ message: "invalid credentials" });
+        const isMatch = await bcrypt.compare(password, user.password || '');
+
+        if(!isMatch){
+            return res.status(401).json({messaage:"invalid credentials"});
+        }
 
         const token = jwt.sign({
             id:user._id,
@@ -82,30 +78,39 @@ async function loginUser(req, res){
             role:user.role
         }, process.env.JWT_KEY, {expiresIn: '1d'});
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: true,
-            maxAge: 24*60*60*1000
+        res.cookie('token',token, {
+            httpOnly:true,
+            secure:true,
+            maxAge: 24*60*60*1000,
         });
 
         return res.status(200).json({
-            message: "login successful",
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                fullName: user.fullName,
-                role: user.role,
-                addresses: user.addresses
+            messaage:"user logined successfully ",
+            user:{
+                id:user._id,
+                username:user.username,
+                email:user.email,
+                fullName:user.fullName,
+                role:user.role,
+                addresses:user.addresses
             }
         });
-    } catch(err){
-        console.error('login error', err);
-        return res.status(500).json({ message: err.message });
+
+    } catch (error) {
+        console.error('error in login user', error);
+        return res.status(500).json({messaage:'internal server error'});
     }
+}
+
+async function getcurrentUser(req,res){
+    return res.status(200).json({
+        messaage: "current user fetched successfully",
+        user:req.user
+    })
 }
 
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    getcurrentUser
 }
