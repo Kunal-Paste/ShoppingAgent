@@ -8,5 +8,6 @@ router.post("/register", validtors.registerValidations, authController.registerU
 router.post("/login", validtors.loginValidation, authController.loginUser);
 router.get('/me', middleware.authMiddleware, authController.getcurrentUser);
 router.get('/logout',authController.logoutUser);
+// will be continuoing tommorrow
 
 module.exports = router;
