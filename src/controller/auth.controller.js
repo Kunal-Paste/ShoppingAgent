@@ -5,7 +5,7 @@ const redis = require('../db/redis')
 
 async function registerUser(req,res){
 
-    const {username,email,password,fullName:{firstName,lastName}} = req.body
+    const {username,email,password,fullName:{firstName,lastName}, role} = req.body
 
     const isUserExist = await userModel.findOne({
         $or : [
@@ -24,7 +24,8 @@ async function registerUser(req,res){
         username,
         email,
         password:hash,
-        fullName:{firstName,lastName}
+        fullName:{firstName,lastName},
+        role:role || 'user'
     })
 
     const token = jwt.sign({
@@ -172,10 +173,42 @@ async function addUserAddress(req,res){
     });
 }
 
+async function deleteUserAddress(req,res){
+    const id = req.user.id;
+    const {addressId} = req.params;
+
+    const user = await userModel.findByIdAndUpdate({_id:id},{
+        $pull:{
+            addresses:{_id:addressId}
+        }
+    },{new:true});
+
+    if(!user){
+        return res.status(404).json({
+            messaage:"user not found"
+        });
+    }
+
+    const addressExists = user.addresses.some(add=> add._id.toString() === addressId);
+
+    if(addressExists){
+        return res.status(500).json({
+            messaage:"failed to delete address"
+        })
+    }
+
+    return res.status(200).json({
+        message:"address deleted successfully",
+        addresses:user.addresses
+    });
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getcurrentUser,
     logoutUser,
-    getUserAddress
+    getUserAddress,
+    addUserAddress,
+    deleteUserAddress
 }

@@ -9,6 +9,8 @@ router.post("/login", validtors.loginValidation, authController.loginUser);
 router.get('/me', middleware.authMiddleware, authController.getcurrentUser);
 router.get('/logout',authController.logoutUser);
 
-router.get('/user/me/addresses', middleware.authMiddleware, )
+router.post('/user/me/addresses', validtors.addressValidation, middleware.authMiddleware, authController.addUserAddress);
+router.get('/user/me/addresses', middleware.authMiddleware, authController.getUserAddress );
+router.delete('/user/me/addresses/:addressId', middleware.authMiddleware, authController.deleteUserAddress);
 
 module.exports = router;
