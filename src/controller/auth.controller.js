@@ -125,9 +125,57 @@ async function logoutUser(req,res){
     return res.status(200).json({messaage: "user logged out successfully"});
 }
 
+async function getUserAddress(req,res){
+    const id = req.user.id;
+
+    const user = await userModel.findById(id).select('addresses');
+
+    if(!user){
+        return res.status(404).json({
+            message:"user not found"
+        })
+    }
+
+    return res.status(200).json({
+        messaage:"user addresses fetched successfully",
+        addresses:user.addresses
+    });
+}
+
+async function addUserAddress(req,res){
+    const id = req.user.id;
+
+    const {street,city,state,pincode,country,isDefault}  = req.body;
+
+    const user = await userModel.findOneAndUpdate({_id:id},{
+        $push:{
+            addresses:{
+                street,
+                city,
+                state,
+                pincode,
+                country,
+                isDefault
+            }
+        }
+    },{new:true});
+
+    if(!user){
+        return res.status(404).json({
+            message:"user not found"
+        })
+    }
+
+    return res.status(201).json({
+       messaage:"address added successfully",
+       address:user.addresses[user.addresses.length-1]
+    });
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getcurrentUser,
-    logoutUser
+    logoutUser,
+    getUserAddress
 }
