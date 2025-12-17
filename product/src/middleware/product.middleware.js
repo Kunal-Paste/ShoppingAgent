@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-function authProduct([roles='user']){
+function authProduct(roles = ['user']){
     
     return function productMiddleware(req,res,next){
-        const token = req.cookies?.token || req.headers?.authorization?.split(' ')[1];
+        const token = (req.cookies && req.cookies.token) || (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[1]);
 
         if(!token){
             return res.status(401).json({
@@ -15,13 +15,14 @@ function authProduct([roles='user']){
             
             const decoded = jwt.verify(token,process.env.JWT_KEY);
 
-            if(!roles.includes(decoded.role)){
+            const allowed = Array.isArray(roles) ? roles : [roles];
+            if(!allowed.includes(decoded.role)){
                 return res.status(403).json({
                     message:'unauthorized forbidden role'
                 })
             }
 
-            const user = decoded;
+            req.user = decoded;
             next();
 
         } catch (error) {

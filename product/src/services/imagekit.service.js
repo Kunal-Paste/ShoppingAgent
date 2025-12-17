@@ -7,7 +7,7 @@ const imagekit = new ImageKit({
     urlEndpoint:process.env.IMAGEKIT_URL_ENDPOINT
 });
 
-async function uploadImage({buffer,filename,folder='/products'}){
+async function uploadImage({buffer,folder='/products'}){
     
     const res = await imagekit.upload({
         file:buffer,
@@ -17,7 +17,13 @@ async function uploadImage({buffer,filename,folder='/products'}){
 
     return {
         url:res.url,
-        thumbnail:res.thumbnailUrl || res.url
-    }
+        thumbnail:res.thumbnailUrl || res.url,
+        id:res.fileId
+    };
 
+}
+
+module.exports = {
+    imagekit,
+    uploadImage
 }
