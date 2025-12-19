@@ -8,6 +8,8 @@ const upload = multer({storage:multer.memoryStorage()});
 const router = express.Router();
 
 router.post("/", middleware.authProduct(['admin','seller','user']), upload.array('images',5), validator.productValidator, controller.createProduct);
-// will update tommorrow.
+router.get("/", controller.getProducts);
+router.get("/:id", controller.getProductsById);
+router.patch("/:id",middleware.authProduct(["seller"]))
 
 module.exports = router;
