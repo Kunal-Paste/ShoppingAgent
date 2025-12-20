@@ -161,7 +161,7 @@ async function deleteProducts(req,res){
         })
     }
 
-    await productModel.findOneAndUpdate({_id:id});
+    await productModel.findOneAndDelete({_id:id});
     
     return res.status(200).json({
         message:'product deleted successfully'
