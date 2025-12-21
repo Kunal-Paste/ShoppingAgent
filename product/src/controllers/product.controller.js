@@ -5,7 +5,7 @@ const {uploadImage} = require('../services/imagekit.service');
 async function createProduct(req,res){
     try {
         
-        const {title,description,priceAmount,priceCurrency='INR'} = req.body;
+        const {title,description,priceAmount,priceCurrency='INR',stock} = req.body;
 
         if(!title || !priceAmount){
             return res.status(400).json({
@@ -22,7 +22,7 @@ async function createProduct(req,res){
 
         const images = await Promise.all((req.files || []).map(file => uploadImage({buffer:file.buffer})));
 
-        const product = await productModel.create({title,description,price,seller,images});
+        const product = await productModel.create({title,description,price,seller,images,stock});
 
         return res.status(201).json({
            message:'product created successfully',
