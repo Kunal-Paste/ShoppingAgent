@@ -20,7 +20,7 @@ const validateAddItemToCart = [
     .withMessage('invalid productId format'),
 
     body('qty')
-    .isIn({gt:0})
+    .isInt({gt:0})
     .withMessage('quantity must be positive integer'),
     validateResult
 ]
@@ -33,7 +33,7 @@ const validateUpdatedItems = [
     .withMessage('invalid productId format'),
 
     body('qty')
-    .isIn({gt:0})
+    .isInt({gt:0})
     .withMessage('quantity must be postive integer'),
     validateResult
 ]

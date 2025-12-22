@@ -4,6 +4,6 @@ const connectDB = require('./src/db/db');
 
 connectDB();
 
-app.listen(3002,()=>{
+app.listen(3003,()=>{
     console.log('order service is running at port 3003');
 })

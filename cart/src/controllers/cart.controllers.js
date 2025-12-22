@@ -5,10 +5,10 @@ async function addItemsToCart(req,res){
 
     const user = req.user;
 
-    let cart = await cartModel.findOne({user:user._id});
+    let cart = await cartModel.findOne({user:user.id});
 
     if(!cart){
-        cart = new cartModel({user:user._id,items:[]});
+        cart = new cartModel({user:user.id,items:[]});
     }
 
     const existingItemIndex = cart.items.findIndex(items=>items.productId.toString() === productId);
@@ -20,6 +20,8 @@ async function addItemsToCart(req,res){
     }
 
     await cart.save();
+
+    console.log('cart (addItemsToCart):', cart);
 
     return res.status(200).json({
         message:'item added to cart successfully',
@@ -55,6 +57,8 @@ async function updateCartItems(req,res){
 
     await cart.save();
 
+    console.log('cart (updateCartItems):', cart);
+
     return res.status(200).json({
         message:'cart updated successfully',
         cart
@@ -70,6 +74,8 @@ async function getCart(req,res){
         cart = new cartModel({user:user.id, items:[]});
         await cart.save();
     }
+
+    console.log('cart (getCart):', cart);
 
     return res.status(200).json({
         cart,
