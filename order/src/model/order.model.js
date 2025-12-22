@@ -5,8 +5,7 @@ const addressSchema = new mongoose.Schema({
       city:String,
       state:String,
       zip:String,
-      country:String,
-      isDefault:{type:Boolean, default:false}
+      country:String
 });
 
 const orderSchema = new mongoose.Schema({

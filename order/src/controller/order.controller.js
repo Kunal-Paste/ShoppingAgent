@@ -53,13 +53,24 @@ async function createOrder(req,res){
             };
         });
 
-        console.log('total priceAmount', priceAmount);
-        console.log('orderItems', orderItems);
+        const order = await orderModel.create({
+            user:user.id,
+            items:orderItems,
+            status:"PENDING",
+            totalPrice:{
+                amount:priceAmount,
+                currency:"INR"
+            },
+            shippingAddress:{
+                street:req.body.shippingAddress.street,
+                city:req.body.shippingAddress.city,
+                state:req.body.shippingAddress.state,
+                zip:req.body.shippingAddress.pincode,
+                country:req.body.shippingAddress.country,
+            }
+        })
 
-        return res.status(200).json({
-            items: orderItems,
-            totalPrice: { amount: priceAmount, currency: orderItems[0]?.price?.currency ?? 'INR' }
-        });
+        res.status(201).json({ order });
         
 
     } catch (err) {
