@@ -82,6 +82,67 @@ async function createOrder(req,res){
     }
 }
 
+async function getMyOrder(req,res){
+    const user = req.user;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page-1) * limit
+
+    try {
+        const orders = await orderModel.find({user:user.id}).skip(skip).limit(limit).exec();
+        const totalOrder = await orderModel.countDocuments({user:user.id});
+        
+        return res.status(200).json({
+            orders,
+            meta:{
+                total:totalOrder,
+                page,
+                limit
+            }
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            message:'internal server error',
+            error:err.message
+        })
+    }
+}
+
+async function getOrderById(req,res){
+    const user = req.user;
+    const orderId = req.params.id;
+
+    try {
+        const order = await orderModel.findById(orderId);
+
+        if(!order){
+            return res.status(404).json({
+                message:'order not found'
+            })
+        }
+        
+       if(order.user.toString() !== user.id){
+        return res.status(403).json({
+            message:'forbidden : you have no access to this order'
+        })
+       }
+
+       res.status(200).json({
+        order
+       })
+
+    } catch (err) {
+        res.status(500).json({
+            message:'internal server error',
+            error:err.message
+        })
+    }
+}
+
 module.exports = {
-    createOrder
+    createOrder,
+    getMyOrder,
+    getOrderById
 }
