@@ -141,8 +141,98 @@ async function getOrderById(req,res){
     }
 }
 
+async function cancleOrderById(req,res){
+    const user = req.user;
+    const orderId = req.params.id;
+
+    try {
+        const order = await orderModel.findById(orderId);
+        
+        if(!order){
+            return res.status(404).json({
+                message:'order not found'
+            })
+        }
+
+        if(order.user.toString() !== user.id){
+            return res.status(403).json({
+                message:'forbidden : you do not have access to this order'
+            })
+        }
+
+        if(order.status !== 'PENDING'){
+            return res.status(409).json({
+                message:'order cannot be cancled at this point'
+            })
+        }
+
+        order.status = "CANCELLED";
+        await order.save();
+
+        res.status(200).json({
+            order
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            message:'internal server error',
+            error:err.message
+        })
+    }
+}
+
+async function updateOrderAddress(req,res){
+    const user = req.user;
+    const orderId = req.params.id;
+
+    try {
+        const order = await orderModel.findById(orderId);
+
+        if(!order){
+            return res.status(404).json({
+                message:'order not found'
+            })
+        }
+        
+        if(order.user.toString() !== user.id){
+            return res.status(403).json({
+                message:'forbidden: you have no access to this order'
+            })
+        }
+
+        if(order.status !== 'PENDING'){
+            return res.status(409).json({
+                message:'order address cannot be updated at this point'
+            })
+        }
+
+        order.shippingAddress = {
+            street:req.body.shippingAddress.street,
+            city:req.body.shippingAddress.city,
+            state:req.body.shippingAddress.state,
+            zip:req.body.shippingAddress.pincode,
+            country:req.body.shippingAddress.country,
+        }
+
+        await order.save();
+
+        return res.status(200).json({
+            message:'address updated successfully',
+            order
+        })
+
+    } catch (err) {
+        res.status(500).json({
+            message:'internal server error',
+            error:err.message
+        })
+    }
+}
+
 module.exports = {
     createOrder,
     getMyOrder,
-    getOrderById
+    getOrderById,
+    cancleOrderById,
+    updateOrderAddress
 }

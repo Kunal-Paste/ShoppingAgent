@@ -44,6 +44,43 @@ const addressValidation = [
     respondWithValidationErrors
 ]
 
+const updateAddressValidation = [
+    body('shippingAddress.street')
+    .isString()
+    .withMessage('street must be string')
+    .notEmpty()
+    .withMessage('street cannot be empty'),
+
+    body('shippingAddress.city')
+    .isString()
+    .withMessage('city must be in string')
+    .notEmpty()
+    .withMessage('city cannot be empty'),
+
+    body('shippingAddress.state')
+    .isString()
+    .withMessage('state must be in string')
+    .notEmpty()
+    .withMessage('state cannot be empty'),
+
+    body('shippingAddress.pincode')
+    .isString()
+    .withMessage('pincode must be in string')
+    .notEmpty()
+    .withMessage('pincode cannot be empty')
+    .bail()
+    .matches(/^\d{4,}$/)
+    .withMessage('pincode must be at least 4 digits'),
+
+    body('shippingAddress.country')
+    .isString()
+    .withMessage('country must be string')
+    .notEmpty()
+    .withMessage('country cannot be empty'),
+    respondWithValidationErrors
+]
+
 module.exports = {
-    addressValidation
+    addressValidation,
+    updateAddressValidation
 }
