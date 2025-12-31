@@ -4,7 +4,7 @@ const axios = require('axios');
 
 const searchProduct = tool(async ({query,token})=>{
 
-    const response = await axios.get(`http://localhost:3001/api/products?q=${data.query}`,{
+    const response = await axios.get(`http://localhost:3001/api/products?q=${query}`,{
         headers:{
             Authorization: `Bearer ${token}`
         }
@@ -16,7 +16,7 @@ const searchProduct = tool(async ({query,token})=>{
    
     name:'searchProduct',
     description:'search for product based on query',
-    inputSchema:z.object({
+    schema:z.object({
         query:z.string().describe("The search query for products")
     })
 
@@ -25,7 +25,7 @@ const searchProduct = tool(async ({query,token})=>{
 
 const addProductToCart = tool(async({productId,qty=1,token})=>{
     
-    const response = await axios.get(`http://localhost:3002/api/cart/items`,{
+    const response = await axios.post(`http://localhost:3002/api/cart/items`,{
       
         productId,
         qty
@@ -42,8 +42,8 @@ const addProductToCart = tool(async({productId,qty=1,token})=>{
    
     name:'addProductToCart',
     description:'add a product to the shoppping cart',
-    inputSchema:z.object({
-        productId:z.string().describe("The id of the product to add to the cart"),
+    schema:z.object({
+        productId:z.string().describe("MongoDB ObjectId of the product (24 hex characters)"),
         qty:z.number().describe("The quantity of the product to add to the cart").default(1)
     })
 

@@ -1,13 +1,15 @@
 const {StateGraph, MessagesAnnotation} = require('@langchain/langgraph');
-const {ChatGoogleGenerativeAI} = require('@langchain/google-genai');
+const {ChatGroq} = require("@langchain/groq");
 const {ToolMessage, AIMessage, HumanMessage} = require('@langchain/core/messages');
 const tools = require('./tools');
 
 
-const model = new ChatGoogleGenerativeAI({
-    model:"gemini-2.0-flash",
-    temperature:0.5,
-})
+const model = new ChatGroq({
+  apiKey: process.env.GROQ_KEY,
+  model: "llama-3.1-8b-instant", // BEST quality
+  // or "llama3-8b-8192" (faster)
+  temperature: 0.5,
+});
 
 
 const graph = new StateGraph(MessagesAnnotation)
@@ -44,7 +46,8 @@ const graph = new StateGraph(MessagesAnnotation)
     
     const response = await model.invoke(state.messages, {tools: [tools.searchProduct, tools.addProductToCart]});
 
-    state.messages.push(new AIMessage({content: response.text, tool_calls:response.tool_calls}));
+    state.messages.push(response);
+
 
     return state;
 
