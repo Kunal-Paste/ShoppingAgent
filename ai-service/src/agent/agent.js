@@ -1,72 +1,65 @@
-const {StateGraph, MessagesAnnotation} = require('@langchain/langgraph');
-const {ChatGroq} = require("@langchain/groq");
-const {ToolMessage, AIMessage, HumanMessage} = require('@langchain/core/messages');
-const tools = require('./tools');
-
+const { StateGraph, MessagesAnnotation } = require("@langchain/langgraph");
+const { ChatGroq } = require("@langchain/groq");
+const { ToolMessage } = require("@langchain/core/messages");
+const tools = require("./tools");
 
 const model = new ChatGroq({
   apiKey: process.env.GROQ_KEY,
-  model: "llama-3.1-8b-instant", // BEST quality
-  // or "llama3-8b-8192" (faster)
-  temperature: 0.5,
+  model: "llama-3.1-8b-instant",
+  temperature: 0, // Lower temperature is better for tool calling accuracy
 });
 
-
 const graph = new StateGraph(MessagesAnnotation)
-.addNode("tools", async(state,config)=>{
-    
-    const lastMessage = state.messages[state.messages.length-1];
+  .addNode("chat", async (state) => {
+    // Bind tools to the model so it knows how to use them
+    const modelWithTools = model.bindTools([tools.searchProduct, tools.addProductToCart]);
+    const response = await modelWithTools.invoke(state.messages);
+    return { messages: [response] }; // Return the new message to be merged
+  })
+  .addNode("tools", async (state, config) => {
+    const lastMessage = state.messages[state.messages.length - 1];
+    const toolMessages = [];
 
-    const toolCall = lastMessage.tool_calls
+    // Process all tool calls requested by the LLM
+    for (const call of (lastMessage.tool_calls ?? [])) {
+      const tool = tools[call.name];
+      if (!tool) throw new Error(`Tool ${call.name} not found`);
 
-    const toolCallResults = await Promise.all(toolCall.map(async (call)=>{
+      try {
+        console.log("Invoking tool:", call.name, call.args);
+        const result = await tool.invoke({
+          ...call.args,
+          token: config.metadata.token,
+        });
 
-        const tool = tools[call.name];
-
-        if(!tool){
-            throw new Error(`Tool ${call.name} not found`)
-        }
-
-        const toolInput = call.args
-
-        console.log("Invoking tool:", call.name, "with input:", call)
-
-        const toolResult = await tool.func({...toolInput, token:config.metadata.token})
-
-        return new ToolMessage({content:toolResult, name:call.name})
-
-    }))
-
-    state.messages.push(...toolCallResults)
-
-    return state
-
-})
-.addNode("chat", async(state,config)=>{
-    
-    const response = await model.invoke(state.messages, {tools: [tools.searchProduct, tools.addProductToCart]});
-
-    state.messages.push(response);
-
-
-    return state;
-
-})
-.addEdge("__start__","chat")
-.addConditionalEdges("chat", async(state)=>{
-
-    const lastMessage = state.messages[state.messages.length-1];
-
-    if(lastMessage.tool_calls && lastMessage.tool_calls.length > 0){
-        return "tools"
-    } else {
-        return "__end__"
+        toolMessages.push(new ToolMessage({
+          content: result,
+          tool_call_id: call.id,
+        }));
+      } catch (err) {
+        // Return error to the LLM so it can try to fix the input (e.g., wrong ID format)
+        toolMessages.push(new ToolMessage({
+          content: `Error: ${err.response?.data?.message || err.message}`,
+          tool_call_id: call.id,
+        }));
+      }
     }
-
-})
-.addEdge("tools","chat")
-
+    return { messages: toolMessages };
+  })
+  .addEdge("__start__", "chat")
+  .addConditionalEdges("chat", (state) => {
+    const lastMessage = state.messages[state.messages.length - 1];
+    if (lastMessage.tool_calls?.length > 0) return "tools";
+    return "__end__";
+  })
+  .addEdge("tools", "chat");
 
 const agent = graph.compile();
 
-module.exports = agent;
+// Helper to extract text for socket.js
+const getLastAIText = (messages) => {
+  const last = messages[messages.length - 1];
+  return last?.content || "";
+};
+
+module.exports = { agent, getLastAIText };
